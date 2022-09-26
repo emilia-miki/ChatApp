@@ -1,0 +1,59 @@
+@using ChatApp.ViewModels
+@using System.Text.Json
+@using System.Net
+@using ChatApp.BLL.Models
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+
+@inject HttpClient Http
+@inject ProtectedSessionStorage Storage
+@inject NavigationManager NavigationManager
+
+<h1>Sign In</h1>
+
+<EditForm Model="_loginViewModel" OnValidSubmit="Login">
+    <CustomValidator @ref="_customValidator"/>
+    <DataAnnotationsValidator/>
+    <ValidationSummary/>
+
+    <label class="form-label">
+        Login:
+        <InputText @bind-Value="_loginViewModel.Login"/>
+    </label>
+    <label class="form-label">
+        Password:
+        <InputText type="password" @bind-Value="_loginViewModel.Password"/>
+    </label>
+
+    <button class="btn btn-primary" type="submit">Sign in</button>
+</EditForm>
+
+@code {
+    private readonly LoginViewModel _loginViewModel = new();
+    private CustomValidator? _customValidator;
+
+    private async void Login()
+    {
+        _customValidator?.ClearErrors();
+
+        var response = await Http.PostAsJsonAsync(
+            "auth/login", _loginViewModel);
+        if (response.IsSuccessStatusCode)
+        {
+            var token = await response.Content.ReadFromJsonAsync<LoginResult>();
+            await Storage.SetAsync("access_token", token!);
+            NavigationManager.NavigateTo(NavigationManager.Uri, true);
+            return;
+        }
+
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            _customValidator?.DisplayErrors(new Dictionary<string, List<string>>
+            {{string.Empty, new List<string> {"Invalid user credentials!"}}});
+            return;
+        }
+        
+        var errors = await response.Content
+            .ReadFromJsonAsync<Dictionary<string, List<string>>>();
+        _customValidator?.DisplayErrors(errors!);
+    }
+}
