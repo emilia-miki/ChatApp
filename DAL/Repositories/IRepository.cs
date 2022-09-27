@@ -1,4 +1,4 @@
-namespace ChatApp.DAL;
+namespace ChatApp.DAL.Repositories;
 
 public interface IRepository
 {

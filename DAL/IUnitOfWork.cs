@@ -1,3 +1,5 @@
+using ChatApp.DAL.Repositories;
+
 namespace ChatApp.DAL;
 
 public interface IUnitOfWork

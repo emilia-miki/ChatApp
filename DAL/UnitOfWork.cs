@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore.Storage;
+using ChatApp.DAL.Repositories;
 
 namespace ChatApp.DAL;
 

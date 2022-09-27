@@ -13,14 +13,4 @@ public class LoginViewModel
     [MinLength(8, ErrorMessage = "Password is too short.")]
     [StringLength(32, ErrorMessage = "Password is too long.")]
     public string Password { get; set; }
-
-    public LoginViewModel(string login, string password)
-    {
-        Login = login;
-        Password = password;
-    }
-
-    public LoginViewModel()
-    {
-    }
 }

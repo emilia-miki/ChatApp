@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -97,5 +96,36 @@ public class AuthController : Controller
         }
 
         return BadRequest(ModelState);
+    }
+
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [HttpPost]
+    [Route("/auth/delete")]
+    public async Task<IActionResult> Delete()
+    {
+        await _accountService.Delete(HttpContext);
+        return Ok();
+    }
+
+    [HttpPost]
+    [Route("/generate/users")]
+    public async Task<IActionResult> GenerateUsers()
+    {
+        const int count = 67;
+        
+        for (var i = 0; i < count; i++)
+        {
+            await Register(new RegisterViewModel
+            {
+                Login = $"login{i}",
+                Email = $"email{i}@my.website",
+                PhoneNumber = $"{i:D10}",
+                Password = $"Password!{i}",
+                PasswordConfirmation = $"Password!{i}"
+            });
+        }
+        
+        Console.WriteLine("Users registerd");
+        return Ok();
     }
 }

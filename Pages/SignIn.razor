@@ -14,17 +14,17 @@
     <CustomValidator @ref="_customValidator"/>
     <DataAnnotationsValidator/>
     <ValidationSummary/>
-
-    <label class="form-label">
+    
+    <label class="form-label row w-50">
         Login:
         <InputText @bind-Value="_loginViewModel.Login"/>
     </label>
-    <label class="form-label">
+    <label class="form-label row w-50">
         Password:
         <InputText type="password" @bind-Value="_loginViewModel.Password"/>
     </label>
-
-    <button class="btn btn-primary" type="submit">Sign in</button>
+    
+    <button class="btn btn-primary row" type="submit">Sign in</button>
 </EditForm>
 
 @code {

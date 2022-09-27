@@ -24,6 +24,14 @@ public class ChatHub : Hub
           await base.OnConnectedAsync();
      }
 
+     public async Task GetUsers(int skip, int batchSize, 
+          string sortBy, bool sortDesc)
+     {
+          var users = _blockService.GetUsers(skip, batchSize, 
+               sortBy, sortDesc);
+          await Clients.Caller.SendAsync("GetUsers", users);
+     }
+
      public async Task GetChats()
      {
           var blocks = 

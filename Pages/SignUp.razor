@@ -5,6 +5,7 @@
 
 @inject HttpClient Http
 @inject ProtectedSessionStorage Storage
+@inject NavigationManager NavigationManager
 
 <h1>SignUp</h1>
 
@@ -13,19 +14,27 @@
     <CustomValidator @ref="_customValidator" />
     <ValidationSummary />
         
-    <label class="form-label">
+    <label class="form-label row">
         Login: 
         <InputText @bind-Value="_registerViewModel.Login"/>
     </label>
-    <label class="form-label">
+    <label class="form-label row">
+        Email Address:
+        <InputText type="email" @bind-Value="_registerViewModel.Email"/>
+    </label>
+    <label class="form-label row">
+        Phone number: 
+        <InputText @bind-Value="_registerViewModel.PhoneNumber"/>
+    </label>
+    <label class="form-label row">
         Password:
         <InputText type="password" @bind-Value="_registerViewModel.Password"/>
     </label>
-    <label class="form-label">
+    <label class="form-label row">
         Confirm password:
         <InputText type="password" @bind-Value="_registerViewModel.PasswordConfirmation"/>
     </label>
-    <button class="btn btn-primary" type="submit">Sign up</button>
+    <button class="btn btn-primary row" type="submit">Sign up</button>
 </EditForm>
 
 @code {
@@ -42,6 +51,7 @@
         {
             var token = await response.Content.ReadFromJsonAsync<LoginResult>();
             await Storage.SetAsync("access_token", token!);
+            NavigationManager.NavigateTo(NavigationManager.Uri, true);
             return;
         }
 

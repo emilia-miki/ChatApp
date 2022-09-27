@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ChatApp.BLL;
+using ChatApp.Controllers;
 using ChatApp.DAL;
 using ChatApp.DAL.Entities;
+using ChatApp.DAL.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Components;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,25 +13,26 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 
-builder.Services.AddSingleton(new HttpClient
-{
-    BaseAddress = new Uri("https://localhost:7230")
-});
+var baseUri = new Uri(builder.Configuration.GetValue<string>("BaseUri"));
+builder.Services.AddScoped(_ => new HttpClient {BaseAddress = baseUri});
 
 builder.Services.AddTransient<IAuthOptions, AuthOptions>();
 builder.Services.AddDbContext<ChatsContext>(options => options
     .UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
+builder.Services.AddTransient<UserRepository>();
+builder.Services.AddTransient<MessageRepository>();
 builder.Services.AddTransient<IGenericRepository<IdentityUser>, 
     GenericRepository<IdentityUser>>();
-builder.Services.AddTransient<IGenericRepository<Message>, 
-    GenericRepository<Message>>();
 builder.Services.AddTransient<IGenericRepository<Chat>, 
     GenericRepository<Chat>>();
 
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 builder.Services.AddTransient<IAccountService, AccountService>();
+builder.Services.AddTransient<IBlockService, BlockService>();
+builder.Services.AddTransient<IMessageService, MessageService>();
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     {
@@ -78,6 +80,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapBlazorHub();
+app.MapHub<ChatHub>("/hub");
 app.MapFallbackToPage("/_Host");
 
 app.Run();

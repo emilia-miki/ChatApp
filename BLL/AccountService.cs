@@ -38,7 +38,12 @@ public class AccountService : IAccountService
 
     public async Task<IdentityResult> Register(RegisterViewModel model)
     {
-        var user = new IdentityUser {UserName = model.Login};
+        var user = new IdentityUser
+        {
+            UserName = model.Login,
+            Email = model.Email,
+            PhoneNumber = model.PhoneNumber
+        };
         var result = await _userManager.CreateAsync(user, model.Password);
         return result;
     }
@@ -86,5 +91,12 @@ public class AccountService : IAccountService
         }
         
         return await _userManager.ResetPasswordAsync(user, token, newPassword);
+    }
+
+    public async Task Delete(HttpContext context)
+    {
+        var name = context.User.Identity!.Name!;
+        var user = await _userManager.FindByNameAsync(name);
+        await _userManager.DeleteAsync(user);
     }
 }

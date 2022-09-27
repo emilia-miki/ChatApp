@@ -11,4 +11,5 @@ public interface IAccountService
     Task<LoginResult> Login(LoginUser model);
     Task<IdentityResult> ChangePassword(
         HttpContext context, string newPassword);
+    Task Delete(HttpContext context);
 }

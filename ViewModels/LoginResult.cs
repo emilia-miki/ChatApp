@@ -1,4 +1,4 @@
-namespace ChatApp.BLL.Models;
+namespace ChatApp.ViewModels;
 
 public record LoginResult
 (

@@ -1,4 +1,10 @@
-﻿@inherits LayoutComponentBase
+﻿@using Microsoft.AspNetCore.SignalR.Client
+@using System.Net.Http.Headers
+@using ChatApp.ViewModels
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inherits LayoutComponentBase
+
+@inject ProtectedSessionStorage Storage
 
 <PageTitle>ChatApp</PageTitle>
 
@@ -13,3 +19,33 @@
         </article>
     </main>
 </div>
+
+@code {
+    public HubConnection? HubConnection;
+    private LoginResult? _accessToken;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_accessToken == null)
+        {
+            await Storage.GetAsync<LoginResult>("access_token");
+            return;
+        }
+
+        if (_accessToken == null || HubConnection != null)
+        {
+            await base.OnAfterRenderAsync(firstRender);
+            return;
+        }
+        
+        HubConnection = new HubConnectionBuilder()
+            .WithUrl("/hub", options =>
+            {
+                options.Headers.Add("Authorization",
+                    new AuthenticationHeaderValue("Bearer",
+                        _accessToken.AccessToken).ToString());
+            }).Build();
+        
+        await HubConnection.StartAsync();
+        await base.OnAfterRenderAsync(firstRender);
+    }
+}

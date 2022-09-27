@@ -1,8 +1,11 @@
 ﻿@using ChatApp.ViewModels
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using ChatApp.BLL.Models
+@using Microsoft.AspNetCore.SignalR.Client
+@using System.Net.Http.Headers
 
 @inject ProtectedSessionStorage Storage
+@inject NavigationManager NavigationManager
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -17,43 +20,57 @@
 <div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
     <nav class="flex-column">
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> 
+            <NavLink class="nav-link" 
+                     href="" Match="NavLinkMatch.All">
+                <span class="oi oi-person" aria-hidden="true"></span> 
                 Profile
             </NavLink>
         </div>
-        <div class="nav-item px-3">
-            @foreach (var chat in _chats)
-            {
-                <div class="nav-link">
+        @if (_token != null)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" 
+                         href="personal-chats" Match="NavLinkMatch.All">
                     <span class="oi oi-chat" aria-hidden="true"></span> 
-                    @chat.ChatName
-                </div>
-            }
-        </div>
+                    Personal chats
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" 
+                         href="group-chats" Match="NavLinkMatch.All">
+                    <span class="oi oi-chat" aria-hidden="true"></span> 
+                    Group chats
+                </NavLink>
+            </div>
+        }
     </nav>
 </div>
 
 @code {
-    private bool collapseNavMenu = true;
+    private bool _collapseNavMenu = true;
     private IEnumerable<ChatView> _chats = new List<ChatView>();
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private string? NavMenuCssClass => _collapseNavMenu ? "collapse" : null;
+    private HubConnection? _hubConnection = null;
+    private string? _token;
     
     private void ToggleNavMenu()
     {
-        collapseNavMenu = !collapseNavMenu;
+        _collapseNavMenu = !_collapseNavMenu;
     }
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         var valueToken = 
-            Storage.GetAsync<LoginResult>("access-token");
-        if (valueToken.IsCompletedSuccessfully)
+            await Storage.GetAsync<LoginResult>("access_token");
+        _token = valueToken.Value?.AccessToken;
+        if (_token == null)
         {
-            // TODO: get chats
+            await base.OnAfterRenderAsync(firstRender);
+            return;
         }
         
-        await base.OnInitializedAsync();
-    }
+        StateHasChanged();
 
+        await base.OnAfterRenderAsync(firstRender);
+    }
 }

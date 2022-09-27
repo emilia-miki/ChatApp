@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace ChatApp.DAL;
+namespace ChatApp.DAL.Repositories;
 
 public class GenericRepository<T> : IGenericRepository<T> where T : class
 {
-    private DbSet<T> _entities;
+    protected DbSet<T> Entities;
     private ChatsContext _context;
 
     public ChatsContext Context
@@ -13,39 +13,39 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
         set
         {
             _context = value;
-            _entities = _context.Set<T>();
+            Entities = _context.Set<T>();
         }
     }
 
     public GenericRepository(ChatsContext chatsContext)
     {
         _context = chatsContext;
-        _entities = _context.Set<T>();
+        Entities = _context.Set<T>();
     }
 
     public IEnumerable<T> GetAll()
     {
-        return _entities.ToList();
+        return Entities.ToList();
     }
 
     public T? GetById(int id)
     {
-        return _entities.Find(id);
+        return Entities.Find(id);
     }
 
     public void Insert(T obj)
     {
-        _entities.Add(obj);
+        Entities.Add(obj);
     }
 
     public void Update(T obj)
     {
-        _entities.Attach(obj);
+        Entities.Attach(obj);
         Context.Entry(obj).State = EntityState.Modified;
     }
 
     public void Delete(T obj)
     {
-        _entities.Remove(obj);
+        Entities.Remove(obj);
     }
 }
