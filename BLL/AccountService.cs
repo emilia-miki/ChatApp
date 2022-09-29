@@ -3,19 +3,20 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using ChatApp.BLL.Models;
+using ChatApp.DAL.Entities;
 using ChatApp.ViewModels;
 
 namespace ChatApp.BLL;
 
 public class AccountService : IAccountService
 {
-    private readonly UserManager<IdentityUser> _userManager;
-    private readonly SignInManager<IdentityUser> _signInManager;
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IAuthOptions _authOptions;
     
     public AccountService(
-        UserManager<IdentityUser> userManager, 
-        SignInManager<IdentityUser> signInManager,
+        UserManager<ApplicationUser> userManager, 
+        SignInManager<ApplicationUser> signInManager,
         IAuthOptions authOptions)
     {
         _userManager = userManager;
@@ -38,7 +39,7 @@ public class AccountService : IAccountService
 
     public async Task<IdentityResult> Register(RegisterViewModel model)
     {
-        var user = new IdentityUser
+        var user = new ApplicationUser
         {
             UserName = model.Login,
             Email = model.Email,

@@ -1,51 +1,62 @@
 ﻿@using Microsoft.AspNetCore.SignalR.Client
-@using System.Net.Http.Headers
 @using ChatApp.ViewModels
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inherits LayoutComponentBase
 
 @inject ProtectedSessionStorage Storage
+@inject NavigationManager NavigationManager
 
 <PageTitle>ChatApp</PageTitle>
 
 <div class="page">
     <div class="sidebar">
-        <NavMenu/>
+        <NavMenu AccessToken="@_accessToken?.AccessToken" 
+                 Callback="Open"/>
     </div>
-
+    
     <main>
         <article class="content px-4">
-            @Body
+            <CascadingValue Value="@_hubConnection" Name="HubConnection">
+                <CascadingValue Value="@_accessToken" Name="AccessToken">
+                    <CascadingValue Value="@_component" Name="Component">
+                        @Body
+                    </CascadingValue> 
+                </CascadingValue>
+            </CascadingValue>
         </article>
     </main>
 </div>
 
 @code {
-    public HubConnection? HubConnection;
+    private HubConnection? _hubConnection;
     private LoginResult? _accessToken;
+    private string _component = "profile";
+
+    private void Open(string component)
+    {
+        _component = component;
+        StateHasChanged();
+    }
+    
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (_accessToken == null)
         {
-            await Storage.GetAsync<LoginResult>("access_token");
-            return;
+            var result = await Storage.GetAsync<LoginResult>("access_token");
+            _accessToken = result.Value;
+            StateHasChanged();
         }
 
-        if (_accessToken == null || HubConnection != null)
+        if (_accessToken == null || _hubConnection != null)
         {
             await base.OnAfterRenderAsync(firstRender);
             return;
         }
         
-        HubConnection = new HubConnectionBuilder()
-            .WithUrl("/hub", options =>
-            {
-                options.Headers.Add("Authorization",
-                    new AuthenticationHeaderValue("Bearer",
-                        _accessToken.AccessToken).ToString());
-            }).Build();
-        
-        await HubConnection.StartAsync();
+        _hubConnection = new HubConnectionFactory(NavigationManager, 
+            _accessToken.AccessToken).GetConnection();
+
+        await _hubConnection.StartAsync();
         await base.OnAfterRenderAsync(firstRender);
     }
 }

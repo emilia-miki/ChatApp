@@ -1,3 +1,4 @@
+using ChatApp.DAL.Entities;
 using ChatApp.ViewModels;
 
 namespace ChatApp.BLL;
@@ -5,11 +6,11 @@ namespace ChatApp.BLL;
 public interface IMessageService
 {
     IEnumerable<MessageView> GetMessageBatch(
-        string username, int skip, string chatName);
-    MessageView? SaveMessage(string username, string chatName, 
+        string chatName, int skip, int batchSize);
+    Task<Message> SaveMessage(string username, string chatName, 
         string messageText, int replyTo, bool replyIsPersonal);
-    string? EditMessage(string username, int messageId, string newText);
-    string? DeleteMessage(string username, int messageId);
+    string? EditMessage(int messageId, string newText);
+    Task<string?> DeleteMessageAsync(string username, int messageId);
     string? DeleteMessageForUser(string username, int messageId);
-    string? GetMessageSender(int id);
+    Task<string?> GetMessageSenderAsync(int id);
 }

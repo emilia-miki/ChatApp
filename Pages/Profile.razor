@@ -1,0 +1,117 @@
+@using System.Net.Http.Headers
+@using ChatApp.ViewModels
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+
+@inject HttpClient Http
+@inject ProtectedSessionStorage Storage
+@inject NavigationManager NavigationManager
+
+@if (AccessToken == null)
+{
+    if (_signUp)
+    {
+        <SignUp />
+        <button class="btn btn-primary row mt-2" @onclick="() => _signUp = false">
+            I already have an account
+        </button>
+    }
+    else
+    {
+        <SignIn />
+        <button class="btn btn-primary row mt-2" @onclick="() => _signUp = true">
+            I don't have an account
+        </button>
+    }
+}
+else
+{
+    <h1>Welcome, @AccessToken.UserName!</h1>
+    <button class="btn btn-primary" @onclick="Logout">
+        Log out
+    </button>
+
+    @if (!_displayChangePassword)
+    {
+        <button class="btn btn-primary mx-1" @onclick="ToggleChange">
+            Change password
+        </button>
+    }
+    else
+    {
+        <button class="btn btn-primary mx-1" @onclick="ToggleChange">
+            Cancel
+        </button>
+    }
+
+    @if (!_displayDeleteConfirmation)
+    {
+        <button class="btn btn-primary" @onclick="ToggleDelete">
+            Delete account
+        </button>
+    }
+    else
+    {
+        <button class="btn btn-primary" @onclick="ToggleDelete">
+            Cancel
+        </button>
+    }
+
+    @if (_displayChangePassword)
+    {
+        <ChangePassword/>
+    }
+
+    @if (_displayDeleteConfirmation)
+    {
+        <p class="mt-2">Delete account?</p>
+        <button class="btn btn-primary" @onclick="Delete">
+            Yes
+        </button>
+        <button class="btn btn-primary" @onclick="ToggleDelete">
+            No
+        </button>
+    }
+}
+
+@code {
+    [Parameter] public LoginResult? AccessToken { get; set; }
+    
+    private bool _signUp;
+    private bool _displayChangePassword, _displayDeleteConfirmation;
+
+    private void ToggleChange()
+    {
+        if (_displayDeleteConfirmation)
+        {
+            return;
+        }
+
+        _displayChangePassword = !_displayChangePassword;
+    }
+
+    private void ToggleDelete()
+    {
+        if (_displayChangePassword)
+        {
+            return;
+        }
+
+        _displayDeleteConfirmation = !_displayDeleteConfirmation;
+    }
+
+    private async void Logout()
+    {
+        await Storage.DeleteAsync("access_token");
+        NavigationManager.NavigateTo(NavigationManager.Uri, true);
+    }
+
+    private async void Delete()
+    {
+        Http.DefaultRequestHeaders.Authorization = 
+            new AuthenticationHeaderValue(
+                "Bearer", AccessToken!.AccessToken);
+        await Http.PostAsJsonAsync("auth/delete", string.Empty);
+        await Storage.DeleteAsync("access_token");
+        NavigationManager.NavigateTo(NavigationManager.Uri, true);
+    }
+}

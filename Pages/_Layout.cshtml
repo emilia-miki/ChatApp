@@ -27,6 +27,50 @@
     <a class="dismiss">🗙</a>
 </div>
 
+<script>
+let tooFast = false;
+let originalScroll, originalScrollHeight;
+
+function scrollToEnd(div) {
+    let sh = div.scrollHeight;
+    div.scrollTop = sh;
+    originalScroll = sh;
+    originalScrollHeight = sh;
+}
+
+function adjustScroll(div) {
+    div.scrollTop = div.scrollHeight - originalScrollHeight;
+}
+
+function saveScroll(div) {
+    originalScroll = div.scrollTop;
+    originalScrollHeight = div.scrollHeight;
+}
+
+function loadScroll(div) {
+    if (Math.abs(originalScrollHeight - originalScroll) < 15) {
+        div.scrollTop = div.scrollHeight;
+    } else {
+        div.scrollTop = originalScroll;
+    }
+    originalScrollHeight = div.scrollHeight;
+    originalScroll = div.scrollTop;
+}
+
+function setScrollCheckCallback(div, obj) {
+    div.onscroll = () => {
+        if (tooFast) {
+            return;
+        }
+        tooFast = true;
+        setTimeout(() => tooFast = false, 100);
+        if (div.scrollTop < 15) {
+            originalScrollHeight = div.scrollHeight;
+            obj.invokeMethodAsync('LoadMore');
+        }
+    }
+}
+</script>
 <script src="_framework/blazor.server.js"></script>
 </body>
 </html>

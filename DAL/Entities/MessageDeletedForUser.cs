@@ -1,8 +1,11 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace ChatApp.DAL.Entities;
 
-public record MessageDeletedForUser
-(
-    int Id,
-    int MessageId,
-    string UserId
-);
+public class MessageDeletedForUser
+{
+    [Key]
+    public int Id { get; set; }
+    public int MessageId { get; set; }
+    public string UserId { get; set; }
+}

@@ -8,12 +8,12 @@ namespace ChatApp.Controllers;
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public class ChatHub : Hub
 {
-     private readonly IBlockService _blockService;
+     private readonly IViewService _viewService;
      private readonly IMessageService _messageService;
 
-     public ChatHub(IBlockService blockService, IMessageService messageService)
+     public ChatHub(IViewService viewService, IMessageService messageService)
      {
-          _blockService = blockService;
+          _viewService = viewService;
           _messageService = messageService;
      }
      
@@ -27,44 +27,45 @@ public class ChatHub : Hub
      public async Task GetUsers(int skip, int batchSize, 
           string sortBy, bool sortDesc)
      {
-          var users = _blockService.GetUsers(skip, batchSize, 
-               sortBy, sortDesc);
+          var users = 
+               await _viewService.GetUsersAsync(Context.User!.Identity!.Name!,
+               skip, batchSize, sortBy, sortDesc);
           await Clients.Caller.SendAsync("GetUsers", users);
      }
 
-     public async Task GetChats()
+     public async Task GetGroups(int skip, int batchSize, 
+          string sortBy, bool sortDesc)
      {
-          var blocks = 
-               _blockService.GetBlocks(Context.User!.Identity!.Name!);
+          var views = 
+               await _viewService.GetGroupsAsync(
+                    Context.User!.Identity!.Name!,
+                    skip, batchSize, sortBy, sortDesc);
           await Clients.Client(Context.ConnectionId).SendAsync(
-               "GetChats", blocks);
+               "GetGroups", views);
      }
 
-     public async Task GetMessages(int skip, string chatName)
+     public async Task GetMessages(string chatName, int skip, int batchSize)
      {
           var messages = _messageService.GetMessageBatch(
-               Context.User!.Identity!.Name!, skip, chatName);
+               chatName, skip, batchSize).ToList();
           await Clients.Client(Context.ConnectionId).SendAsync(
-               "GetMessages", chatName, messages);
+               "GetMessages", messages);
      }
 
      public async Task BroadcastMessage(string chatName, string messageText, 
           int replyTo, bool replyIsPersonal)
      {
-          var message = _messageService.SaveMessage(
+          var message = await _messageService.SaveMessage(
                Context.User!.Identity!.Name!, chatName, 
                messageText, replyTo, replyIsPersonal);
-          if (message == null)
-          {
-               return;
-          }
 
           if (replyTo != -1 && replyIsPersonal)
           {
                await Clients.Client(Context.ConnectionId).SendAsync(
                     "BroadcastMessage", chatName, message);
                
-               var username = _messageService.GetMessageSender(replyTo);
+               var username = 
+                    await _messageService.GetMessageSenderAsync(replyTo);
                if (username == null)
                {
                     return;
@@ -86,7 +87,7 @@ public class ChatHub : Hub
      public async Task BroadcastEdit(int messageId, string messageText)
      {
           var chatName = _messageService.EditMessage(
-               Context.User!.Identity!.Name!, messageId, messageText);
+                messageId, messageText);
           if (chatName != null)
           {
                await Clients.All.SendAsync("BroadcastEdit", 
@@ -96,7 +97,7 @@ public class ChatHub : Hub
 
      public async Task BroadcastDelete(int messageId)
      {
-          var chatName = _messageService.DeleteMessage(
+          var chatName = await _messageService.DeleteMessageAsync(
                Context.User!.Identity!.Name!, messageId);
           if (chatName == null)
           {

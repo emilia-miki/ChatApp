@@ -1,28 +1,104 @@
+using ChatApp.DAL;
+using ChatApp.DAL.Entities;
+using ChatApp.DAL.Repositories;
 using ChatApp.ViewModels;
+using Microsoft.AspNetCore.Identity;
 
 namespace ChatApp.BLL;
 
 public class MessageService : IMessageService
 {
-    public IEnumerable<MessageView> GetMessageBatch(string username, int skip, string chatName)
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly UserManager<ApplicationUser> _userManager;
+
+    public MessageService(IUnitOfWork unitOfWork, 
+        UserManager<ApplicationUser> userManager)
     {
-        throw new NotImplementedException();
+        _unitOfWork = unitOfWork;
+        _userManager = userManager;
     }
 
-    public MessageView? SaveMessage(string username, string chatName, string messageText,
-        int replyTo, bool replyIsPersonal)
+    private async Task<string> GetUserIdAsync(string username)
     {
-        throw new NotImplementedException();
+        var userRepository = _unitOfWork.GetRepository<UserRepository>();
+        var user = await userRepository.GetByLoginAsync(username);
+        var userId = user.Id!;
+        return userId;
     }
 
-    public string? EditMessage(string username, int messageId, string newText)
+    private int GetChatId(string chatName)
     {
-        throw new NotImplementedException();
+        var chatRepository = _unitOfWork.GetRepository<ChatRepository>();
+        var chat = chatRepository.GetByName(chatName);
+        var chatId = chat!.Id;
+        return chatId;
+    }
+    
+    public IEnumerable<MessageView> GetMessageBatch( 
+        string chatName, int skip, int batchSize)
+    {
+        var messageRepository = _unitOfWork.GetRepository<MessageRepository>();
+        var chatRepository = _unitOfWork.GetRepository<ChatRepository>();
+        var chat = chatRepository.GetByName(chatName);
+        if (chat == null)
+        {
+            return new List<MessageView>();
+        }
+        var chatId = chat.Id;
+        return messageRepository.GetMessages(chatId, skip, batchSize);
     }
 
-    public string? DeleteMessage(string username, int messageId)
+    public async Task<Message> SaveMessage(string username, string chatName, 
+        string messageText, int replyTo, bool replyIsPersonal)
     {
-        throw new NotImplementedException();
+        var userId = await GetUserIdAsync(username);
+        var chatId = GetChatId(chatName);
+
+        var messageRepository = _unitOfWork.GetRepository<MessageRepository>();
+        var message = new Message
+        {
+            ChatId = chatId,
+            UserId = userId,
+            DateTime = DateTime.UtcNow,
+            Text = messageText,
+            ReplyTo = replyTo,
+            ReplyIsPersonal = replyIsPersonal
+        };
+        messageRepository.Insert(message);
+        _unitOfWork.Save();
+        return message;
+    }
+
+    public string? EditMessage(int messageId, string newText)
+    {
+        var messageRepository = _unitOfWork.GetRepository<MessageRepository>();
+        var message = messageRepository.GetById(messageId);
+        if (message == null)
+        {
+            return null;
+        }
+
+        var chatRepository = _unitOfWork.GetRepository<ChatRepository>();
+        var chatName = chatRepository.GetById(message.ChatId)!.Name;
+        
+        message.Text = newText;
+        messageRepository.Update(message);
+        _unitOfWork.Save();
+        return chatName;
+    }
+
+    public async Task<string?> DeleteMessageAsync(string username, int messageId)
+    {
+        var messageRepository = _unitOfWork.GetRepository<MessageRepository>();
+        var message = messageRepository.GetById(messageId);
+        var userId = await GetUserIdAsync(username);
+        if (message?.UserId != userId)
+        {
+            return null;
+        }
+
+        var chatRepository = _unitOfWork.GetRepository<ChatRepository>();
+        return chatRepository.GetById(message.ChatId)!.Name;
     }
 
     public string? DeleteMessageForUser(string username, int messageId)
@@ -30,8 +106,17 @@ public class MessageService : IMessageService
         throw new NotImplementedException();
     }
 
-    public string? GetMessageSender(int id)
+    public async Task<string?> GetMessageSenderAsync(int id)
     {
-        throw new NotImplementedException();
+        var messageRepository = _unitOfWork.GetRepository<MessageRepository>();
+        var message = messageRepository.GetById(id);
+        if (message == null)
+        {
+            return null;
+        }
+        
+        var userId = message.UserId;
+        var user = await _userManager.FindByIdAsync(userId);
+        return user.UserName;
     }
 }

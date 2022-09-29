@@ -1,0 +1,48 @@
+.message {
+    background-color: rgb(244, 244, 244);
+    border-radius: 8px;
+    padding: 8px;
+    margin-top: 2px;
+}
+
+.my-message {
+    margin-left: auto;
+    padding: 8px;
+    background-color: rgb(93, 143, 194);
+    border-radius: 8px;
+    margin-top: 2px;
+}
+
+a {
+    color: black;
+}
+
+.input-and-reply {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    bottom: 5px;
+    width: 100%;
+}
+
+.text-input {
+    height: 15vh;
+    border-width: 2px;
+    width: 72%;
+    margin-top: 5px;
+}
+
+.input-area {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+}
+
+.input-and-reply  textarea {
+    width: 75%;
+    height: 5vh;
+    max-height: 5vh;
+    max-width: 75%;
+    margin-left: 5px;
+    overflow: hidden;
+}

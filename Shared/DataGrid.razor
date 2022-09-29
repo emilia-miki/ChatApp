@@ -1,5 +1,6 @@
 @typeparam T
 @using System.Reflection
+@using ChatApp.DAL.Entities
 @using ChatApp.ViewModels
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Microsoft.AspNetCore.SignalR.Client
@@ -24,7 +25,7 @@
         <tbody>
         @foreach (var item in _dataSource)
         {
-            <tr>
+            <tr @onclick="() => Callback(GetChatName(item))">
                 @foreach (var member in _info)
                 {
                     if (member.MemberType == MemberTypes.Property)
@@ -74,33 +75,30 @@
 }
 
 @code {
-    [Parameter]
-    public string Name { get; set; } = null!;
-    [Parameter]
-    public string DefaultSortBy { get; set; } = null!;
-    
+    [Parameter] public string Name { get; set; } = null!;
+    [Parameter] public string DefaultSortBy { get; set; } = null!;
+    [Parameter] public Func<T, string> GetChatName { get; set; } = null!;
+    [Parameter] public HubConnection HubConnection { get; set; } = null!;
+    [Parameter] public string Token { get; set; } = null!;
+    [Parameter] public Action<string> Callback { get; set; } = null!;
+
+    private const int BatchSize = 16;
+
     private List<T>? _dataSource;
     private MemberInfo[]? _info;
     private bool _sortDesc;
     private string _currentSort = null!;
-    private HubConnection? _hubConnection;
     private int _skip;
-        private const int BatchSize = 16;
-    private string? _token;
 
     private async void RefreshData()
     {
-        if (_hubConnection != null)
-        {
-            await _hubConnection.InvokeAsync(
-                "GetUsers", _skip, BatchSize,
-                _currentSort, _sortDesc);
-        }
+        await HubConnection.InvokeAsync("Get" + Name, 
+            _skip, BatchSize, _currentSort, _sortDesc);
     }
     
     private void Previous()
     {
-        if (_skip <= 0 || _hubConnection == null)
+        if (_skip <= 0)
         {
             return;
         }
@@ -111,7 +109,7 @@
 
     private void Next()
     {
-        if (_dataSource is not {Count: BatchSize} || _hubConnection == null)
+        if (_dataSource is not {Count: BatchSize})
         {
             return;
         }
@@ -137,31 +135,18 @@
         RefreshData();
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override void OnInitialized()
     {
-        if (_token == null)
-        {
-            var result = await Storage.GetAsync<LoginResult>("access_token");
-            _token = result.Value?.AccessToken;
-        }
-        
-        if (_token != null && _hubConnection == null)
-        {
-            _hubConnection = new HubConnectionFactory(NavigationManager, _token)
-                    .GetConnection();
-            _hubConnection.On("Get" + Name,
-                (List<T> data) =>
-                {
-                    _dataSource = data;
-                    var type = _dataSource[0]!.GetType();
-                    _info = type.GetMembers();
-                    StateHasChanged();
-                });
-            await _hubConnection.StartAsync();
-            _currentSort = DefaultSortBy;
-            RefreshData();
-        }
-        
-        await base.OnAfterRenderAsync(firstRender);
+        base.OnInitialized();
+        HubConnection.On("Get" + Name,
+            (List<T> data) =>
+            {
+                _dataSource = data;
+                var type = _dataSource[0]!.GetType();
+                _info = type.GetMembers();
+                StateHasChanged();
+            });
+        _currentSort = DefaultSortBy;
+        RefreshData();
     }
 }

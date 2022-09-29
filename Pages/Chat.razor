@@ -1,0 +1,278 @@
+@page "/chat"
+@using Microsoft.AspNetCore.SignalR.Client
+@using ChatApp.ViewModels
+@using Microsoft.AspNetCore.SignalR
+@using Microsoft.EntityFrameworkCore.Metadata.Internal
+@using System.Globalization
+@using Microsoft.EntityFrameworkCore.SqlServer.Query.Internal
+
+@inject IJSRuntime Js
+
+<div class="overflow-scroll" style="max-height: 75vh" @ref="@_messageArea">
+    <ul>
+        @foreach (var message in _messages)
+        {
+            <li class="list-group w-100">
+                <div class="@(message.UserName != UserName 
+                                ? "w-50 message" : "w-50 my-message")">
+                    @if (message.ReplyTo != -1)
+                    {
+                        <span class="fst-italic overflow-hidden">
+                            Reply to: @(() => GetReply(message.ReplyTo))
+                        </span><br />
+                    }
+                    <span class="fst-italic">@message.UserName:</span>
+                    <span>@message.Text</span><br />
+                    <span>@(message.DateTime.ToLocalTime()
+                              .ToString(CultureInfo.CurrentCulture))</span>
+                    <div class="container">
+                        <a class="flex-column link-secondary"
+                           @onclick="() => { _replyTo = message.Id; StateHasChanged(); }">
+                            Reply
+                        </a>
+                        @if (message.UserName == UserName)
+                        {
+                            <a class="flex-column link-secondary"
+                               @onclick="() => { _edit = message.Id; StateHasChanged(); }">
+                                Edit
+                            </a>
+                        }
+                        <a class="flex-column link-secondary"
+                           @onclick="() => { _delete = message.Id; StateHasChanged(); }">
+                            Delete
+                        </a>
+                    </div>
+                </div>
+            </li>
+        }
+    </ul>
+</div>
+
+<div class="input-and-reply">
+    <div class="input-area">
+        @if (_replyTo != -1)
+        {
+            <span @onclick="() => { _replyTo = -1; StateHasChanged(); }">
+                X
+            </span>
+        }
+        <textarea readonly>
+            @GetReplyMessage()
+        </textarea>
+    </div>
+    <div class="input-area">
+        <input type="text" class="mx-2 text-input" @bind="@_text"/>
+        @if (_edit == -1)
+        {
+            <button class="btn btn-primary"
+                    @onclick="Send">
+                Send
+            </button>
+        }
+        @if (_edit != -1)
+        {
+            <button class="btn btn-primary"
+                    @onclick="@Edit">
+                Edit
+            </button>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public HubConnection HubConnection { get; set; } = null!;
+    [Parameter] public string? Name { get; set; }
+    [Parameter] public string UserName { get; set; } = null!;
+
+    private LinkedList<MessageView> _messages = new();
+    private ElementReference _messageArea;
+    private int _skip = 0;
+    private const int BatchSize = 10;
+    private int _replyTo = -1;
+    private int _edit = -1;
+    private string _text = string.Empty;
+    private int _delete = -1;
+    private bool _canLoadMore = true;
+    private bool _replyIsPersonal;
+
+    private void Send()
+    {
+        HubConnection.InvokeAsync("BroadcastMessage", 
+            Name, _text, _replyTo, _replyIsPersonal);
+    }
+
+    private void Edit()
+    {
+        HubConnection.InvokeAsync("BroadcastEdit", 
+            _edit, _text);
+    }
+
+    private void Delete()
+    {
+        HubConnection.InvokeAsync("BroadcastDelete", _delete);
+    }
+
+    private string GetEditText()
+    {
+        return _messages
+            .Single(m => m.Id == _edit)
+            .Text;
+    }
+
+    private string GetReplyMessage()
+    {
+        if (_replyTo == -1)
+        {
+            return string.Empty;
+        }
+
+        var message = _messages
+            .SingleOrDefault(m => m.Id == _replyTo);
+        return message == null 
+            ? "Reply to: Deleted message" 
+            : $"Reply to: {message.UserName}: {message.Text}";
+    }
+    
+    private void RefreshData()
+    {
+        HubConnection.InvokeAsync("GetMessages", Name,
+            _skip, BatchSize);
+    }
+
+    [JSInvokable("LoadMore")]
+    public void LoadMore()
+    {
+        if (!_canLoadMore)
+        {
+            return;
+        }
+        
+        _skip += BatchSize;
+        RefreshData();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+        if (!firstRender)
+        {
+            return;
+        }
+        
+        Js.InvokeVoidAsync("scrollToEnd", _messageArea);
+        var objRef 
+            = DotNetObjectReference.Create(this);
+        Js.InvokeVoidAsync("setScrollCheckCallback", 
+            _messageArea, objRef);
+    }
+
+    private string GetReply(int id)
+    {
+        var message = _messages.SingleOrDefault(m => m.Id == id);
+        return message == null
+            ? "Message deleted"
+            : $"{message.UserName}: {message.Text}";
+    }
+
+    protected override Task OnInitializedAsync()
+    {
+        if (Name == null)
+        {
+            return base.OnInitializedAsync();
+        }
+
+        SetHubEventHandlers();
+        RefreshData();
+        return base.OnInitializedAsync();
+    }
+
+    private void SetHubEventHandlers()
+    {
+        HubConnection.On("GetMessages", GetMessagesHandler());
+        HubConnection.On("BroadcastEdit", EditHandler());
+        HubConnection.On("BroadcastMessage", NewMessageHandler());
+        HubConnection.On("BroadcastDelete", DeleteHandler());
+    }
+
+    private Action<List<MessageView>> GetMessagesHandler()
+    {
+        return messages =>
+        {
+            if (messages.Count < BatchSize)
+            {
+                _canLoadMore = false;
+            }
+
+            foreach (var view in messages)
+            {
+                _messages.AddFirst(view);
+            }
+
+            StateHasChanged();
+            Js.InvokeVoidAsync("adjustScroll", _messageArea);
+        };
+    }
+
+    private Action<string, int, string> EditHandler()
+    {
+        return (chatName, id, text) =>
+        {
+            if (Name != chatName)
+            {
+                return;
+            }
+
+            var message = _messages.SingleOrDefault(
+                m => m.Id == id);
+            if (message == null)
+            {
+                return;
+            }
+
+            message.Text = text;
+            SafeUpdate();
+        };
+    }
+
+    private Action<string, MessageView> NewMessageHandler()
+    {
+        return (chatName, message) =>
+        {
+            if (Name != chatName)
+            {
+                return;
+            }
+
+            _messages.AddLast(message);
+            SafeUpdate();
+        };
+    }
+
+    private Action<string, int> DeleteHandler()
+    {
+        return (chatName, messageId) =>
+        {
+            if (Name != chatName)
+            {
+                return;
+            }
+
+            var message = _messages.SingleOrDefault(
+                m => m.Id == messageId);
+            if (message == null)
+            {
+                return;
+            }
+
+            _messages.Remove(message);
+        };
+    }
+
+    private void SafeUpdate()
+    {
+        Js.InvokeVoidAsync("saveScroll", _messageArea);
+        StateHasChanged();
+        Js.InvokeVoidAsync("loadScroll", _messageArea);
+    }
+
+}

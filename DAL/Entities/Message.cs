@@ -1,11 +1,20 @@
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+
 namespace ChatApp.DAL.Entities;
 
-public record Message
-(
-    int Id,
-    string UserId,
-    int ChatId,
-    DateTime DateTime,
-    int ReplyTo,
-    string ReplyIsPersonal
-);
+public class Message
+{
+    [Key]
+    public int Id { get; set; }
+    public string UserId { get; set; }
+    public string Text { get; set; }
+
+    public int ChatId { get; set; }
+    public DateTime DateTime { get; set; }
+    public int ReplyTo { get; set; }
+    public bool ReplyIsPersonal { get; set; }
+    
+    [JsonIgnore]
+    public ApplicationUser User { get; set; }
+}

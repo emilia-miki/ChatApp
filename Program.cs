@@ -24,17 +24,16 @@ builder.Services.AddDbContext<ChatsContext>(options => options
 
 builder.Services.AddTransient<UserRepository>();
 builder.Services.AddTransient<MessageRepository>();
-builder.Services.AddTransient<IGenericRepository<IdentityUser>, 
-    GenericRepository<IdentityUser>>();
-builder.Services.AddTransient<IGenericRepository<Chat>, 
-    GenericRepository<Chat>>();
+builder.Services.AddTransient<ChatRepository>();
+builder.Services.AddTransient<GenericRepository<MessageDeletedForUser>>();
+builder.Services.AddTransient<GenericRepository<MemberChat>>();
 
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 builder.Services.AddTransient<IAccountService, AccountService>();
-builder.Services.AddTransient<IBlockService, BlockService>();
+builder.Services.AddTransient<IViewService, ViewService>();
 builder.Services.AddTransient<IMessageService, MessageService>();
 
-builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
         options.Password.RequireDigit = true;
         options.Password.RequiredLength = 6;

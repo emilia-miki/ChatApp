@@ -4,11 +4,11 @@ using ChatApp.DAL.Entities;
 
 namespace ChatApp.DAL;
 
-public class ChatsContext : IdentityDbContext
+public class ChatsContext : IdentityDbContext<ApplicationUser>
 {
     public DbSet<Chat> Chats { get; set; } = null!;
     public DbSet<Message> Messages { get; set; } = null!;
-    public DbSet<MessageDeletedForUser> MessagesDeletedForUsers { get; set; } 
+    public DbSet<MessageDeletedForUser> MessagesDeletedForUsers { get; set; }
         = null!;
     public DbSet<MemberChat> MembersChats { get; set; } = null!;
 
@@ -23,6 +23,33 @@ public class ChatsContext : IdentityDbContext
         IConfiguration config) : base(options)
     {
         _config = config;
+    }
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        builder.Entity<Chat>()
+            .Property(c => c.Id)
+            .ValueGeneratedOnAdd();
+        builder.Entity<Message>()
+            .Property(c => c.Id)
+            .ValueGeneratedOnAdd();
+        builder.Entity<MemberChat>()
+            .Property(c => c.Id)
+            .ValueGeneratedOnAdd();
+        builder.Entity<MessageDeletedForUser>()
+            .Property(c => c.Id)
+            .ValueGeneratedOnAdd();
+
+        builder.Entity<Chat>()
+            .HasMany(c => c.MembersChats)
+            .WithOne(mc => mc.Chat)
+            .HasForeignKey(mc => mc.ChatId);
+        builder.Entity<Message>()
+            .HasOne(m => m.User)
+            .WithMany(u => u.Messages)
+            .HasForeignKey(m => m.UserId);
+
+        base.OnModelCreating(builder);
     }
 
     protected override void OnConfiguring(
