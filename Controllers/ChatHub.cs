@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using ChatApp.BLL;
+using ChatApp.BLL.Interfaces;
+using ChatApp.ViewModels;
 
 namespace ChatApp.Controllers;
 
@@ -46,48 +47,43 @@ public class ChatHub : Hub
 
      public async Task GetMessages(string chatName, int skip, int batchSize)
      {
-          var messages = _messageService.GetMessageBatch(
-               chatName, skip, batchSize).ToList();
+          var messages = 
+               await _messageService.GetMessageBatchAsync(
+                    Context.User!.Identity!.Name!, 
+                    chatName, skip, batchSize);
           await Clients.Client(Context.ConnectionId).SendAsync(
                "GetMessages", messages);
      }
 
-     public async Task BroadcastMessage(string chatName, string messageText, 
-          int replyTo, bool replyIsPersonal)
+     public async Task CreateChatIfNotExists(string chatName)
      {
-          var message = await _messageService.SaveMessage(
-               Context.User!.Identity!.Name!, chatName, 
-               messageText, replyTo, replyIsPersonal);
+          await _messageService.CreateIfNotExistsAsync(chatName);
+     }
 
-          if (replyTo != -1 && replyIsPersonal)
-          {
-               await Clients.Client(Context.ConnectionId).SendAsync(
-                    "BroadcastMessage", chatName, message);
-               
-               var username = 
-                    await _messageService.GetMessageSenderAsync(replyTo);
-               if (username == null)
+     public async Task BroadcastMessage(string chatName, 
+          string messageText, int replyTo)
+     {
+          var username = Context.User!.Identity!.Name!;
+          var message = await _messageService.SaveMessageAsync(
+               username, chatName, 
+               messageText, replyTo);
+          
+          await Clients.All.SendAsync(
+               "BroadcastMessage", chatName, 
+               new MessageView 
                {
-                    return;
-               }
-               
-               if (username != Context.User!.Identity!.Name)
-               {
-                    await Clients.Group(username).SendAsync(
-                         "BroadcastMessage", chatName, message);
-               }
-          }
-          else
-          {
-               await Clients.All.SendAsync(
-                    "BroadcastMessage", chatName, message);
-          }
+                    Id = message.Id,
+                    UserName = username,
+                    DateTime = message.DateTime,
+                    ReplyTo = message.ReplyTo,
+                    Text = message.Text
+               });
      }
 
      public async Task BroadcastEdit(int messageId, string messageText)
      {
-          var chatName = _messageService.EditMessage(
-                messageId, messageText);
+          var chatName = await _messageService.EditMessageAsync(
+               Context.User!.Identity!.Name!, messageId, messageText);
           if (chatName != null)
           {
                await Clients.All.SendAsync("BroadcastEdit", 
@@ -110,7 +106,7 @@ public class ChatHub : Hub
 
      public async Task DeleteLocally(int messageId)
      {
-          var chatName = _messageService.DeleteMessageForUser(
+          var chatName = await _messageService.DeleteMessageForUserAsync(
                Context.User!.Identity!.Name!, messageId);
           if (chatName == null)
           {

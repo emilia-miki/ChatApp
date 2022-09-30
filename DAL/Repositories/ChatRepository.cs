@@ -10,15 +10,15 @@ public class ChatRepository : GenericRepository<Chat>
     {
     }
 
-    public Chat? GetByName(string name)
+    public async Task<Chat?> GetByNameAsync(string name)
     {
-        return Entities.SingleOrDefault(c => c.Name == name);
+        return await Entities.SingleOrDefaultAsync(c => c.Name == name);
     }
     
-    public IEnumerable<ChatView> GetGroups(string userId, 
+    public async Task<IEnumerable<ChatView>> GetGroupsAsync(string userId, 
         int skip, int batchSize, string sortBy, bool sortDesc)
     {
-        return Entities
+        return await Entities
             .Include(c => c.MembersChats)
             .Where(c => !c.IsPersonal && c.MembersChats.Any(
                 mc => mc.UserId == userId))
@@ -29,6 +29,6 @@ public class ChatRepository : GenericRepository<Chat>
             .OrderBy(sortBy, sortDesc)
             .Skip(skip)
             .Take(batchSize)
-            .ToList();
+            .ToListAsync();
     }
 }

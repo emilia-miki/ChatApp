@@ -5,6 +5,7 @@
 @using Microsoft.EntityFrameworkCore.Metadata.Internal
 @using System.Globalization
 @using Microsoft.EntityFrameworkCore.SqlServer.Query.Internal
+@using Blazorise
 
 @inject IJSRuntime Js
 
@@ -18,7 +19,7 @@
                     @if (message.ReplyTo != -1)
                     {
                         <span class="fst-italic overflow-hidden">
-                            Reply to: @(() => GetReply(message.ReplyTo))
+                            Reply to: @GetReply(message.ReplyTo)
                         </span><br />
                     }
                     <span class="fst-italic">@message.UserName:</span>
@@ -27,18 +28,19 @@
                               .ToString(CultureInfo.CurrentCulture))</span>
                     <div class="container">
                         <a class="flex-column link-secondary"
-                           @onclick="() => { _replyTo = message.Id; StateHasChanged(); }">
+                           @onclick="@(() => VisualReply(message.Id))">
                             Reply
                         </a>
                         @if (message.UserName == UserName)
                         {
                             <a class="flex-column link-secondary"
-                               @onclick="() => { _edit = message.Id; StateHasChanged(); }">
+                               @onclick="() => VisualEdit(message.Id)">
                                 Edit
                             </a>
                         }
                         <a class="flex-column link-secondary"
-                           @onclick="() => { _delete = message.Id; StateHasChanged(); }">
+                           @onclick="() => VisualDelete(
+                               message.Id, message.UserName != UserName)">
                             Delete
                         </a>
                     </div>
@@ -48,6 +50,47 @@
     </ul>
 </div>
 
+<Modal @ref="_deleteModalRef">
+    <ModalContent Centered>
+        <ModalHeader>
+            <ModalTitle>Are you sure?</ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+        <ModalBody>
+            <Button Color="Color.Primary" Clicked="@Delete">
+                Delete for all
+            </Button>
+            <Button Color="Color.Primary" Clicked="@DeleteForMe">
+                Delete for me
+            </Button>
+        </ModalBody>
+        <ModalFooter>
+            <Button Color="Color.Secondary"
+                    Clicked="@(() => _deleteModalRef.Hide())">
+                Cancel
+            </Button>
+        </ModalFooter>
+    </ModalContent>
+</Modal>
+
+<Modal @ref="_deleteForMeModalRef">
+    <ModalContent Centered>
+        <ModalHeader>
+            <ModalTitle>Are you sure?</ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+        <ModalBody>
+            <Button Color="Color.Primary" Clicked="@DeleteForMe">
+                Delete for me
+            </Button>
+            <Button Color="Color.Primary" 
+                    Clicked="@(() => _deleteForMeModalRef.Hide())">
+                Cancel
+            </Button>
+        </ModalBody>
+    </ModalContent>
+</Modal>
+
 <div class="input-and-reply">
     <div class="input-area">
         @if (_replyTo != -1)
@@ -56,16 +99,19 @@
                 X
             </span>
         }
-        <textarea readonly>
-            @GetReplyMessage()
-        </textarea>
+        @if (_replyTo != -1)
+        {
+            <textarea readonly>
+                @GetReplyMessage()
+            </textarea>
+        }
     </div>
     <div class="input-area">
         <input type="text" class="mx-2 text-input" @bind="@_text"/>
         @if (_edit == -1)
         {
             <button class="btn btn-primary"
-                    @onclick="Send">
+                    @onclick="@Send">
                 Send
             </button>
         }
@@ -93,23 +139,85 @@
     private string _text = string.Empty;
     private int _delete = -1;
     private bool _canLoadMore = true;
-    private bool _replyIsPersonal;
+    private Modal _deleteModalRef = null!;
+    private Modal _deleteForMeModalRef = null!;
+
+    private void DeleteForMe()
+    {
+        HubConnection.InvokeAsync("DeleteLocally", _delete);
+        _delete = -1;
+        HideModal();
+    }
+    
+    private void HideModal()
+    {
+        _deleteModalRef.Hide();
+    }
+
+    private void VisualReply(int id)
+    {
+        _replyTo = id;
+        if (_edit != -1)
+        {
+            _edit = 0;
+            _text = string.Empty;
+        }
+        _delete = -1;
+        SafeUpdate();
+    }
+    
+    private void VisualEdit(int id)
+    {
+        _replyTo = -1;
+        _edit = id;
+        _text = _messages.Single(m => m.Id == id).Text;
+        _delete = -1;
+        SafeUpdate();
+    }
+    
+    private void VisualDelete(int id, bool locally)
+    {
+        _replyTo = -1;
+        if (_edit != -1)
+        {
+            _edit = 0;
+            _text = string.Empty;
+        }
+        _delete = id;
+        if (locally)
+        {
+            _deleteForMeModalRef.Show();
+        }
+        else
+        {
+            _deleteModalRef.Show();
+        }
+        SafeUpdate();
+    }
 
     private void Send()
     {
         HubConnection.InvokeAsync("BroadcastMessage", 
-            Name, _text, _replyTo, _replyIsPersonal);
+            Name, _text, _replyTo);
+        _text = string.Empty;
+        _replyTo = -1;
+        _edit = -1;
+        SafeUpdate();
     }
 
     private void Edit()
     {
         HubConnection.InvokeAsync("BroadcastEdit", 
             _edit, _text);
+        _text = string.Empty;
+        _edit = -1;
+        SafeUpdate();
     }
 
     private void Delete()
     {
         HubConnection.InvokeAsync("BroadcastDelete", _delete);
+        HideModal();
     }
 
     private string GetEditText()
@@ -182,6 +290,10 @@
         }
 
         SetHubEventHandlers();
+        if (Name.EndsWith("Personal Chat"))
+        {
+            HubConnection.InvokeAsync("CreateChatIfNotExists", Name);
+        }
         RefreshData();
         return base.OnInitializedAsync();
     }
@@ -265,6 +377,7 @@
             }
 
             _messages.Remove(message);
+            SafeUpdate();
         };
     }
 
@@ -274,5 +387,4 @@
         StateHasChanged();
         Js.InvokeVoidAsync("loadScroll", _messageArea);
     }
-
-}
+} 

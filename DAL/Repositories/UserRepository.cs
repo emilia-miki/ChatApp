@@ -1,6 +1,7 @@
 using ChatApp.DAL.Entities;
 using ChatApp.ViewModels;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace ChatApp.DAL.Repositories;
 
@@ -14,10 +15,10 @@ public class UserRepository : GenericRepository<ApplicationUser>
         _userManager = userManager;
     }
 
-    public IEnumerable<UserView> GetUserViews(string userId,
+    public async Task<IEnumerable<UserView>> GetUserViewsAsync(string userId,
         int skip, int batchSize, string? sortBy, bool sortDesc)
     {
-        return Entities
+        return await Entities
             .Where(u => u.Id != userId)
             .Select(u => new UserView
             {
@@ -28,7 +29,7 @@ public class UserRepository : GenericRepository<ApplicationUser>
             .OrderBy(sortBy, sortDesc)
             .Skip(skip)
             .Take(batchSize)
-            .ToList();
+            .ToListAsync();
     }
 
     public async Task<ApplicationUser> GetByLoginAsync(string login)

@@ -13,7 +13,6 @@ public class Message
     public int ChatId { get; set; }
     public DateTime DateTime { get; set; }
     public int ReplyTo { get; set; }
-    public bool ReplyIsPersonal { get; set; }
     
     [JsonIgnore]
     public ApplicationUser User { get; set; }

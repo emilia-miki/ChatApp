@@ -1,12 +1,13 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using ChatApp.BLL.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using ChatApp.BLL.Models;
 using ChatApp.DAL.Entities;
 using ChatApp.ViewModels;
 
-namespace ChatApp.BLL;
+namespace ChatApp.BLL.Services;
 
 public class AccountService : IAccountService
 {

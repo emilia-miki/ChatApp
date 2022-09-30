@@ -19,25 +19,25 @@ public class UnitOfWork : IUnitOfWork
         Context = chatsContext;
     }
 
-    public void CreateTransaction()
+    public async Task CreateTransactionAsync()
     {
-        _objTran = Context.Database.BeginTransaction();
+        _objTran = await Context.Database.BeginTransactionAsync();
     }
 
-    public void Commit()
+    public async Task CommitAsync()
     {
-        _objTran.Commit();
+        await _objTran.CommitAsync();
     }
 
-    public void Rollback()
+    public async Task RollbackAsync()
     {
-        _objTran.Rollback();
-        _objTran.Dispose();
+        await _objTran.RollbackAsync();
+        await _objTran.DisposeAsync();
     }
 
-    public void Save()
+    public async Task SaveAsync()
     {
-        Context.SaveChanges();
+        await Context.SaveChangesAsync();
     }
 
     public T GetRepository<T>() where T : IRepository

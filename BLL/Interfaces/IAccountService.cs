@@ -2,7 +2,7 @@ using ChatApp.BLL.Models;
 using ChatApp.ViewModels;
 using Microsoft.AspNetCore.Identity;
 
-namespace ChatApp.BLL;
+namespace ChatApp.BLL.Interfaces;
 
 public interface IAccountService
 {

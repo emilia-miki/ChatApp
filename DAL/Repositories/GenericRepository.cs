@@ -23,19 +23,19 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
         Entities = _context.Set<T>();
     }
 
-    public IEnumerable<T> GetAll()
+    public async Task<IEnumerable<T>> GetAllAsync()
     {
-        return Entities.ToList();
+        return await Entities.ToListAsync();
     }
 
-    public T? GetById(int id)
+    public async Task<T?> GetByIdAsync(int id)
     {
-        return Entities.Find(id);
+        return await Entities.FindAsync(id);
     }
 
-    public void Insert(T obj)
+    public async Task InsertAsync(T obj)
     {
-        Entities.Add(obj);
+        await Entities.AddAsync(obj);
     }
 
     public void Update(T obj)

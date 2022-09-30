@@ -1,10 +1,11 @@
+using ChatApp.BLL.Interfaces;
 using ChatApp.DAL;
 using ChatApp.DAL.Entities;
 using ChatApp.ViewModels;
 using ChatApp.DAL.Repositories;
 using Microsoft.AspNetCore.Identity;
 
-namespace ChatApp.BLL;
+namespace ChatApp.BLL.Services;
 
 public class ViewService : IViewService
 {
@@ -24,7 +25,7 @@ public class ViewService : IViewService
         var chatRepository = _unitOfWork.GetRepository<ChatRepository>();
         var user = await _userManager.FindByNameAsync(username);
         var userId = user.Id!;
-        var chatViews = chatRepository.GetGroups(
+        var chatViews = await chatRepository.GetGroupsAsync(
             userId, skip, batchSize, sortBy, sortDesc);
         return chatViews;
     }
@@ -36,7 +37,7 @@ public class ViewService : IViewService
         var user = await _userManager.FindByNameAsync(username);
         var userId = user.Id!;
         var userViews = 
-            userRepository.GetUserViews(userId, 
+            await userRepository.GetUserViewsAsync(userId, 
                 skip, batchSize, sortBy, sortDesc);
         return userViews;
     }

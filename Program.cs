@@ -1,12 +1,15 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using ChatApp.BLL;
 using ChatApp.Controllers;
 using ChatApp.DAL;
 using ChatApp.DAL.Entities;
 using ChatApp.DAL.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Blazorise;
+using Blazorise.Bootstrap;
+using ChatApp.BLL.Interfaces;
+using ChatApp.BLL.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +17,12 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
+builder.Services
+    .AddBlazorise(options =>
+    {
+        options.Immediate = true;
+    })
+    .AddBootstrapProviders();
 
 var baseUri = new Uri(builder.Configuration.GetValue<string>("BaseUri"));
 builder.Services.AddScoped(_ => new HttpClient {BaseAddress = baseUri});
@@ -26,12 +35,14 @@ builder.Services.AddTransient<UserRepository>();
 builder.Services.AddTransient<MessageRepository>();
 builder.Services.AddTransient<ChatRepository>();
 builder.Services.AddTransient<GenericRepository<MessageDeletedForUser>>();
-builder.Services.AddTransient<GenericRepository<MemberChat>>();
+builder.Services.AddTransient<MemberChatRepository>();
 
+builder.Services.AddTransient<IAuthorizationService, AuthorizationService>();
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 builder.Services.AddTransient<IAccountService, AccountService>();
 builder.Services.AddTransient<IViewService, ViewService>();
-builder.Services.AddTransient<IMessageService, MessageService>();
+builder.Services.AddTransient<
+    ChatApp.BLL.Interfaces.IMessageService, MessageService>();
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {

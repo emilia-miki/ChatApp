@@ -1,6 +1,6 @@
 using Microsoft.IdentityModel.Tokens;
 
-namespace ChatApp.BLL;
+namespace ChatApp.BLL.Interfaces;
 
 public interface IAuthOptions
 {

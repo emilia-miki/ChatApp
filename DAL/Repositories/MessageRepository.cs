@@ -11,10 +11,10 @@ public class MessageRepository : GenericRepository<Message>
     {
     }
     
-    public IEnumerable<MessageView> GetMessages(
+    public async Task<IEnumerable<MessageView>> GetMessagesAsync(
         int chatId, int skip, int batchSize)
     {
-        return Entities
+        return await Entities
             .Include(m => m.User)
             .Where(m => m.ChatId == chatId)
             .OrderByDescending(m => m.DateTime)
@@ -26,13 +26,7 @@ public class MessageRepository : GenericRepository<Message>
                 UserName = m.User.UserName,
                 Text = m.Text,
                 ReplyTo = m.ReplyTo,
-                ReplyIsPersonal = m.ReplyIsPersonal,
                 DateTime = m.DateTime
-            });
-    }
-
-    public List<UserView> GetUserViews()
-    {
-        throw new NotImplementedException();
+            }).ToListAsync();
     }
 }

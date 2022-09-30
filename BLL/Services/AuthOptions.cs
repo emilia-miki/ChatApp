@@ -1,7 +1,8 @@
 using System.Text;
+using ChatApp.BLL.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 
-namespace ChatApp.BLL;
+namespace ChatApp.BLL.Services;
 
 public class AuthOptions : IAuthOptions
 {

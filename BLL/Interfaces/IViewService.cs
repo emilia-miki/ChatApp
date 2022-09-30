@@ -1,6 +1,6 @@
 using ChatApp.ViewModels;
 
-namespace ChatApp.BLL;
+namespace ChatApp.BLL.Interfaces;
 
 public interface IViewService
 { 
