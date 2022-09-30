@@ -1,75 +1,8 @@
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using ChatApp.Controllers;
-using ChatApp.DAL;
-using ChatApp.DAL.Entities;
-using ChatApp.DAL.Repositories;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using Blazorise;
-using Blazorise.Bootstrap;
-using ChatApp.BLL.Interfaces;
-using ChatApp.BLL.Services;
+using ChatApp;
 
 var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
-builder.Services.AddControllers();
-builder.Services.AddSignalR();
-builder.Services
-    .AddBlazorise(options =>
-    {
-        options.Immediate = true;
-    })
-    .AddBootstrapProviders();
-
-var baseUri = new Uri(builder.Configuration.GetValue<string>("BaseUri"));
-builder.Services.AddScoped(_ => new HttpClient {BaseAddress = baseUri});
-
-builder.Services.AddTransient<IAuthOptions, AuthOptions>();
-builder.Services.AddDbContext<ChatsContext>(options => options
-    .UseSqlServer(builder.Configuration.GetConnectionString("Default")));
-
-builder.Services.AddTransient<UserRepository>();
-builder.Services.AddTransient<MessageRepository>();
-builder.Services.AddTransient<ChatRepository>();
-builder.Services.AddTransient<GenericRepository<MessageDeletedForUser>>();
-builder.Services.AddTransient<MemberChatRepository>();
-
-builder.Services.AddTransient<IAuthorizationService, AuthorizationService>();
-builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
-builder.Services.AddTransient<IAccountService, AccountService>();
-builder.Services.AddTransient<IViewService, ViewService>();
-builder.Services.AddTransient<
-    ChatApp.BLL.Interfaces.IMessageService, MessageService>();
-
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
-    {
-        options.Password.RequireDigit = true;
-        options.Password.RequiredLength = 6;
-    }).AddEntityFrameworkStores<ChatsContext>()
-    .AddDefaultTokenProviders();
-
-var authOptions = new AuthOptions(builder.Configuration);
-builder.Services.AddAuthentication(auth =>
-{
-    auth.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    auth.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidIssuer = authOptions.Issuer,
-        ValidateAudience = true,
-        ValidAudience = authOptions.Audience,
-        ValidateLifetime = true,
-        RequireExpirationTime = true,
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = authOptions.Key
-    };
-});
+ServiceInjector.Configure(builder.Configuration, builder.Services);
 
 var app = builder.Build();
 
