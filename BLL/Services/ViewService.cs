@@ -11,12 +11,15 @@ public class ViewService : IViewService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IAuthorizationService _authorizationService;
 
     public ViewService(IUnitOfWork unitOfWork, 
-        UserManager<ApplicationUser> userManager)
+        UserManager<ApplicationUser> userManager,
+        IAuthorizationService authorizationService)
     {
         _unitOfWork = unitOfWork;
         _userManager = userManager;
+        _authorizationService = authorizationService;
     }
     
     public async Task<IEnumerable<ChatView>> GetGroupsAsync(string username, 
@@ -40,5 +43,27 @@ public class ViewService : IViewService
             await userRepository.GetUserViewsAsync(userId, 
                 skip, batchSize, sortBy, sortDesc);
         return userViews;
+    }
+    
+    public async Task<IEnumerable<MessageView>> GetMessageBatchAsync( 
+        string username, string chatName, int skip, int batchSize)
+    {
+        if (!await _authorizationService.IsUserInChat(username, chatName))
+        {
+            return new List<MessageView>();
+        }
+        
+        var chatRepository = _unitOfWork.GetRepository<ChatRepository>();
+        var chat = await chatRepository.GetByNameAsync(chatName);
+        if (chat == null)
+        {
+            return new List<MessageView>();
+        }
+        var chatId = chat.Id;
+
+        var messageRepository = _unitOfWork.GetRepository<MessageRepository>();
+        var messageViews = 
+            await messageRepository.GetMessagesAsync(chatId, skip, batchSize);
+        return messageViews;
     }
 }

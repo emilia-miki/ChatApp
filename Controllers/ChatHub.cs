@@ -48,7 +48,7 @@ public class ChatHub : Hub
      public async Task GetMessages(string chatName, int skip, int batchSize)
      {
           var messages = 
-               await _messageService.GetMessageBatchAsync(
+               await _viewService.GetMessageBatchAsync(
                     Context.User!.Identity!.Name!, 
                     chatName, skip, batchSize);
           await Clients.Client(Context.ConnectionId).SendAsync(
@@ -67,6 +67,10 @@ public class ChatHub : Hub
           var message = await _messageService.SaveMessageAsync(
                username, chatName, 
                messageText, replyTo);
+          if (message == null)
+          {
+               return;
+          }
           
           await Clients.All.SendAsync(
                "BroadcastMessage", chatName, 
@@ -80,39 +84,26 @@ public class ChatHub : Hub
                });
      }
 
-     public async Task BroadcastEdit(int messageId, string messageText)
+     public async Task BroadcastEdit(string chatName, int messageId, string messageText)
      {
-          var chatName = await _messageService.EditMessageAsync(
+          await _messageService.EditMessageAsync(
                Context.User!.Identity!.Name!, messageId, messageText);
-          if (chatName != null)
-          {
-               await Clients.All.SendAsync("BroadcastEdit", 
-                    chatName, messageId, messageText);
-          }
+          await Clients.All.SendAsync("BroadcastEdit", 
+               chatName, messageId, messageText);
      }
 
-     public async Task BroadcastDelete(int messageId)
+     public async Task BroadcastDelete(string chatName, int messageId)
      {
-          var chatName = await _messageService.DeleteMessageAsync(
+          await _messageService.DeleteMessageAsync(
                Context.User!.Identity!.Name!, messageId);
-          if (chatName == null)
-          {
-               return;
-          }
-          
           await Clients.All.SendAsync(
                "BroadcastDelete", chatName, messageId);
      }
 
-     public async Task DeleteLocally(int messageId)
+     public async Task DeleteLocally(string chatName, int messageId)
      {
-          var chatName = await _messageService.DeleteMessageForUserAsync(
+          await _messageService.DeleteMessageForUserAsync(
                Context.User!.Identity!.Name!, messageId);
-          if (chatName == null)
-          {
-               return;
-          }
-          
           await Clients.Client(Context.ConnectionId).SendAsync(
                "BroadcastDelete", chatName, messageId);
      }

@@ -2,7 +2,6 @@ using ChatApp.BLL.Interfaces;
 using ChatApp.DAL;
 using ChatApp.DAL.Entities;
 using ChatApp.DAL.Repositories;
-using ChatApp.ViewModels;
 
 namespace ChatApp.BLL.Services;
 
@@ -32,28 +31,6 @@ public class MessageService : IMessageService
         var chat = await chatRepository.GetByNameAsync(chatName);
         var chatId = chat!.Id;
         return chatId;
-    }
-    
-    public async Task<IEnumerable<MessageView>> GetMessageBatchAsync( 
-        string username, string chatName, int skip, int batchSize)
-    {
-        if (!await _authorizationService.IsUserInChat(username, chatName))
-        {
-            return new List<MessageView>();
-        }
-        
-        var chatRepository = _unitOfWork.GetRepository<ChatRepository>();
-        var chat = await chatRepository.GetByNameAsync(chatName);
-        if (chat == null)
-        {
-            return new List<MessageView>();
-        }
-        var chatId = chat.Id;
-
-        var messageRepository = _unitOfWork.GetRepository<MessageRepository>();
-        var messageViews = 
-            await messageRepository.GetMessagesAsync(chatId, skip, batchSize);
-        return messageViews;
     }
 
     public async Task<Message?> SaveMessageAsync(string username, string chatName, 
@@ -124,65 +101,46 @@ public class MessageService : IMessageService
         await _unitOfWork.SaveAsync();
     }
 
-    public async Task<string?> EditMessageAsync(string username,
+    public async Task EditMessageAsync(string username, 
         int messageId, string newText)
     {
         var message = await _authorizationService
             .GetMessageIfAuthorizedAsync(username, messageId);
         if (message == null)
         {
-            return null;
+            return;
         }
 
-        var chatRepository = _unitOfWork.GetRepository<ChatRepository>();
-        var chat = await chatRepository.GetByIdAsync(message.ChatId);
-        var chatName = chat!.Name;
-        
         message.Text = newText;
         var messageRepository = _unitOfWork.GetRepository<MessageRepository>();
         messageRepository.Update(message);
         await _unitOfWork.SaveAsync();
-        
-        return chatName;
     }
 
-    public async Task<string?> DeleteMessageAsync(string username, int messageId)
+    public async Task DeleteMessageAsync(string username, int messageId)
     {
         var message = await _authorizationService
             .GetMessageIfAuthorizedAsync(username, messageId);
         if (message == null)
         {
-            return null;
+            return;
         }
-
-        var chatRepository = _unitOfWork.GetRepository<ChatRepository>();
-        var chat = await chatRepository.GetByIdAsync(message.ChatId);
-        var chatName = chat!.Name;
-
+        
         var messageRepository = _unitOfWork.GetRepository<MessageRepository>();
         messageRepository.Delete(message);
         await _unitOfWork.SaveAsync();
-        return chatName;
     }
 
-    public async Task<string?> DeleteMessageForUserAsync(
+    public async Task DeleteMessageForUserAsync(
         string username, int messageId)
     {
         var message = await _authorizationService
             .GetMessageIfAuthorizedAsync(username, messageId);
         if (message == null)
         {
-            return null;
+            return;
         }
-        
-        var chatId = message.ChatId;
-        var chatRepository = _unitOfWork.GetRepository<ChatRepository>();
-        var chat = await chatRepository.GetByIdAsync(chatId);
-        if (chat == null)
-        {
-            return null;
-        }
-        
+
         var repository = _unitOfWork
             .GetRepository<GenericRepository<MessageDeletedForUser>>();
         await repository.InsertAsync(new MessageDeletedForUser
@@ -191,7 +149,5 @@ public class MessageService : IMessageService
             MessageId = messageId
         });
         await _unitOfWork.SaveAsync();
-
-        return chat.Name;
     }
 }

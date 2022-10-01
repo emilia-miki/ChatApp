@@ -1,4 +1,3 @@
-using System.Globalization;
 using ChatApp.DAL.Entities;
 using ChatApp.ViewModels;
 using Microsoft.EntityFrameworkCore;

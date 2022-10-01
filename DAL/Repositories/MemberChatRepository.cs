@@ -1,6 +1,5 @@
 using ChatApp.DAL.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query.Internal;
 
 namespace ChatApp.DAL.Repositories;
 

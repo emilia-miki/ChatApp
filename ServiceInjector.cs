@@ -14,7 +14,8 @@ namespace ChatApp;
 
 public static class ServiceInjector
 {
-    public static void Configure(IConfiguration configuration,
+    public static void Configure(
+        IConfiguration configuration,
         IServiceCollection services) 
     {
         services.AddRazorPages();
@@ -44,6 +45,7 @@ public static class ServiceInjector
         services.AddTransient<IAuthorizationService, AuthorizationService>();
         services.AddTransient<IUnitOfWork, UnitOfWork>();
         services.AddTransient<IAccountService, AccountService>();
+        services.AddTransient<IAuthorizationService, AuthorizationService>();
         services.AddTransient<IViewService, ViewService>();
         services.AddTransient<BLL.Interfaces.IMessageService, MessageService>();
 

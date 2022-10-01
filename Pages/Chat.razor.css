@@ -46,3 +46,7 @@ a {
     margin-left: 5px;
     overflow: hidden;
 }
+
+.reply {
+    max-height: 1.5em;
+}

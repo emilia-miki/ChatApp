@@ -18,7 +18,7 @@
                                 ? "w-50 message" : "w-50 my-message")">
                     @if (message.ReplyTo != -1)
                     {
-                        <span class="fst-italic overflow-hidden">
+                        <span class="fst-italic overflow-hidden reply">
                             Reply to: @GetReply(message.ReplyTo)
                         </span><br />
                     }
@@ -96,7 +96,7 @@
         @if (_replyTo != -1)
         {
             <span @onclick="() => { _replyTo = -1; StateHasChanged(); }">
-                X
+                &times;
             </span>
         }
         @if (_replyTo != -1)
@@ -107,7 +107,8 @@
         }
     </div>
     <div class="input-area">
-        <input type="text" class="mx-2 text-input" @bind="@_text"/>
+        <textarea class="mx-2 text-input" @bind="@_text" style="min-height: 22vh">
+        </textarea>
         @if (_edit == -1)
         {
             <button class="btn btn-primary"
@@ -144,14 +145,10 @@
 
     private void DeleteForMe()
     {
-        HubConnection.InvokeAsync("DeleteLocally", _delete);
+        HubConnection.InvokeAsync("DeleteLocally", 
+            Name, _delete);
         _delete = -1;
-        HideModal();
-    }
-    
-    private void HideModal()
-    {
-        _deleteModalRef.Hide();
+        _deleteForMeModalRef.Hide();
     }
 
     private void VisualReply(int id)
@@ -208,7 +205,7 @@
     private void Edit()
     {
         HubConnection.InvokeAsync("BroadcastEdit", 
-            _edit, _text);
+            Name, _edit, _text);
         _text = string.Empty;
         _edit = -1;
         SafeUpdate();
@@ -216,8 +213,9 @@
 
     private void Delete()
     {
-        HubConnection.InvokeAsync("BroadcastDelete", _delete);
-        HideModal();
+        HubConnection.InvokeAsync("BroadcastDelete", 
+            Name, _delete);
+        _deleteModalRef.Hide();
     }
 
     private string GetEditText()
@@ -243,8 +241,8 @@
     
     private void RefreshData()
     {
-        HubConnection.InvokeAsync("GetMessages", Name,
-            _skip, BatchSize);
+        HubConnection.InvokeAsync("GetMessages",
+            Name, _skip, BatchSize);
     }
 
     [JSInvokable("LoadMore")]

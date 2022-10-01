@@ -76,29 +76,22 @@ public class GenerateController : Controller
                 };
                 await chatRepository.InsertAsync(chat);
                 await _unitOfWork.SaveAsync();
-                
+
+                var userId1 = users[i].Id!;
+                var userId2 = users[j].Id!;
                 await memberChatRepository.InsertAsync(new MemberChat
                 {
                     ChatId = chat.Id,
-                    UserId = users[i].Id
+                    UserId = userId1
                 });
                 await memberChatRepository.InsertAsync(new MemberChat
                 {
                     ChatId = chat.Id,
-                    UserId = users[j].Id
+                    UserId = userId2
                 });
 
-                for (var k = 0; k < 5; k++)
-                {
-                    await messageRepository.InsertAsync(new Message
-                    {
-                        ChatId = chat.Id,
-                        DateTime = DateTime.UtcNow,
-                        ReplyTo = -1,
-                        UserId = k % 2 == 0 ? users[i].Id : users[j].Id,
-                        Text = "message " + k
-                    });
-                }
+                await GenerateMessages(messageRepository, 
+                    chat, userId1, userId2);
                 await _unitOfWork.SaveAsync();
             }
         }
@@ -106,7 +99,24 @@ public class GenerateController : Controller
         Console.WriteLine("Personal chats registered");
         return Ok();
     }
-    
+
+    private static async Task GenerateMessages(
+        MessageRepository messageRepository,
+        Chat chat, string userId1, string userId2)
+    {
+        for (var k = 0; k < 5; k++)
+        {
+            await messageRepository.InsertAsync(new Message
+            {
+                ChatId = chat.Id,
+                DateTime = DateTime.UtcNow,
+                ReplyTo = -1,
+                UserId = k % 2 == 0 ? userId1 : userId2,
+                Text = "message " + k
+            });
+        }
+    }
+
     [HttpPost]
     [Route("/generate/group-chats")]
     public async Task<IActionResult> GenerateGroupChats()

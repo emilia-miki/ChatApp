@@ -24,4 +24,8 @@
       <_ContentIncludedByDefault Remove="Areas\Identity\Pages\Shared\_LoginPartial.cshtml" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="db\Tables" />
+    </ItemGroup>
+
 </Project>
