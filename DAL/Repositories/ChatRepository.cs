@@ -20,12 +20,17 @@ public class ChatRepository : GenericRepository<Chat>
     {
         return await Entities
             .Include(c => c.MembersChats)
+            .Include(c => c.Messages)
             .Where(c => !c.IsPersonal && c.MembersChats.Any(
                 mc => mc.UserId == userId))
-            .Select(c => new ChatView
-            {
-                Name = c.Name
-            })
+            .Select(c => new ChatView 
+                {
+                    Name = c.Name,
+                    LatestMessageDateTime = c.Messages
+                        .Select(m => m.DateTime)
+                        .Max()
+                }
+            )
             .OrderBy(sortBy, sortDesc)
             .Skip(skip)
             .Take(batchSize)

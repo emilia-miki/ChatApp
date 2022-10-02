@@ -19,6 +19,7 @@ public class UserRepository : GenericRepository<ApplicationUser>
         int skip, int batchSize, string? sortBy, bool sortDesc)
     {
         return await Entities
+            .Include(u => u.Messages)
             .Where(u => u.Id != userId)
             .Select(u => new UserView
             {

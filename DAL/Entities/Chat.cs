@@ -12,4 +12,6 @@ public class Chat
 
     [JsonIgnore] 
     public ICollection<MemberChat> MembersChats { get; set; }
+    [JsonIgnore]
+    public ICollection<Message> Messages { get; set; }
 }

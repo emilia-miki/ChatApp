@@ -16,4 +16,6 @@ public class Message
     
     [JsonIgnore]
     public ApplicationUser User { get; set; }
+    [JsonIgnore]
+    public Chat Chat { get; set; }
 }

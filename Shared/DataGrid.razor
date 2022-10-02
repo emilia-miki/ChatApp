@@ -4,6 +4,7 @@
 @using ChatApp.ViewModels
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Microsoft.AspNetCore.SignalR.Client
+@using System.Globalization
 
 @inject NavigationManager NavigationManager
 @inject ProtectedSessionStorage Storage
@@ -31,7 +32,14 @@
                     if (member.MemberType == MemberTypes.Property)
                     {
                         <td>
-                            @item!.GetType().GetProperty(member.Name)!.GetValue(item)
+                            @if (item!.GetType().GetProperty(member.Name)!.GetValue(item) is DateTime)
+                            {
+                                @(((DateTime) item.GetType().GetProperty(member.Name)!.GetValue(item)!).ToLocalTime().ToString(CultureInfo.CurrentCulture))
+                            }
+                            else
+                            {
+                                @item.GetType().GetProperty(member.Name)!.GetValue(item)
+                            }
                         </td>
                     }
                 }
