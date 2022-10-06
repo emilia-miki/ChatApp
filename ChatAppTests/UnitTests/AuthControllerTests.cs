@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Moq;
 using NUnit.Framework;
 
-namespace ChatAppTests;
+namespace ChatAppTests.UnitTests;
 
 [TestFixture]
 public class AuthControllerTests

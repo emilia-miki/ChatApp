@@ -6,7 +6,7 @@ using ChatApp.DAL.Repositories;
 using Moq;
 using NUnit.Framework;
 
-namespace ChatAppTests.ServiceTests;
+namespace ChatAppTests.UnitTests.ServiceTests;
 
 [TestFixture]
 public class ChatServiceTests

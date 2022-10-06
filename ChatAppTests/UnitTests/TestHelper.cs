@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using Moq;
 using IAuthorizationService = ChatApp.BLL.Interfaces.IAuthorizationService;
 
-namespace ChatAppTests;
+namespace ChatAppTests.UnitTests;
 
 public static class TestHelper
 {

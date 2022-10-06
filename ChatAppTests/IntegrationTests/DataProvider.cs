@@ -468,15 +468,14 @@ public static class DataProvider
                     ChatId = id
                 });
 
-                GenerateMessages(rand, id, chat);
+                GenerateMessages(rand, i, j, id, chat);
             }
         }
     }
 
-    private static void GenerateMessages(Random rand, int id, Chat chat)
+    private static void GenerateMessages(Random rand, int i, int j, int id,
+        Chat chat)
     {
-        int i;
-        int j;
         for (var k = 0; k < 5; k++)
         {
             var userIndex = rand.Next(1) == 0 ? i : j;

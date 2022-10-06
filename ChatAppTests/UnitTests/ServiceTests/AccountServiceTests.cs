@@ -10,7 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using Moq;
 using NUnit.Framework;
 
-namespace ChatAppTests.ServiceTests;
+namespace ChatAppTests.UnitTests.ServiceTests;
 
 [TestFixture]
 public class AccountServiceTests
