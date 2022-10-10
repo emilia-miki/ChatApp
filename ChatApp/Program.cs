@@ -23,3 +23,5 @@ app.MapHub<ChatHub>("/hub");
 app.MapFallbackToPage("/_Host");
 
 app.Run();
+
+public partial class Program {}

@@ -51,9 +51,9 @@ public class ChatHub : Hub
 
      public async Task GetMessagesAsync(string chatName, int skip, int batchSize)
      {
-          var messages = 
+          var messages =
                await _viewService.GetMessageBatchAsync(
-                    Context.User!.Identity!.Name!, 
+                    Context.User!.Identity!.Name!,
                     chatName, skip, batchSize);
           await Clients.Client(Context.ConnectionId).SendAsync(
                "GetMessagesAsync", messages);
@@ -71,7 +71,7 @@ public class ChatHub : Hub
      {
           var username = Context.User!.Identity!.Name!;
           var message = await _messageService.SaveMessageAsync(
-               username, chatName, 
+               username, chatName,
                messageText, replyTo);
           if (message == null)
           {
@@ -90,7 +90,8 @@ public class ChatHub : Hub
                });
      }
 
-     public async Task BroadcastEditAsync(string chatName, int messageId, string messageText)
+     public async Task BroadcastEditAsync(string chatName, 
+          int messageId, string messageText)
      {
           if (string.IsNullOrWhiteSpace(messageText))
           {

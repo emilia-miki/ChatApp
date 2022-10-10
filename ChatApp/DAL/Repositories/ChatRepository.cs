@@ -30,6 +30,7 @@ public class ChatRepository : GenericRepository<Chat>
                     Name = c.Name,
                     LatestMessageDateTime = c.Messages
                         .Select(m => m.DateTime)
+                        .DefaultIfEmpty()
                         .Max()
                 }
             )

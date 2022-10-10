@@ -31,4 +31,10 @@
       <Folder Include="db\Tables" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Include="integrationsettings.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
