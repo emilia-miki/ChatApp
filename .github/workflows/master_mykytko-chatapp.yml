@@ -34,6 +34,6 @@ jobs:
       with:
         app-name: mykytko-chatapp
         slot-name: Production
-        publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_B88019E49E6840309402F06C017C31A6 }}
+        publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_9B3A1D0B7FED4D76B73A80DA1F77FD6C }}
         package: ${{env.DOTNET_ROOT}}/myapp
 
