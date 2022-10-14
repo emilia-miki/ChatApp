@@ -13,11 +13,14 @@ public class MessageRepository : GenericRepository<Message>
     }
     
     public virtual async Task<IEnumerable<MessageView>> GetMessagesAsync(
-        int chatId, int skip, int batchSize)
+        string userId, int chatId, int skip, int batchSize)
     {
         return await Entities
             .Include(m => m.User)
-            .Where(m => m.ChatId == chatId)
+            .Include(m => m.MessageDeletedForUsers)
+            .Where(m => m.ChatId == chatId 
+                        && !m.MessageDeletedForUsers.Any(
+                            mdfu => mdfu.UserId == userId))
             .OrderByDescending(m => m.DateTime)
             .Skip(skip)
             .Take(batchSize)

@@ -51,8 +51,8 @@ public class ViewServiceTests
             .GetMessageBatchAsync("", "", 0, 10);
         
         _messageRepositoryMock.Verify(repo => 
-            repo.GetMessagesAsync(It.IsAny<int>(), It.IsAny<int>(), 
-                It.IsAny<int>()), Times.Never);
+            repo.GetMessagesAsync(It.IsAny<string>(), It.IsAny<int>(),
+                It.IsAny<int>(), It.IsAny<int>()), Times.Never);
         Assert.IsEmpty(result);
     }
 
@@ -67,8 +67,8 @@ public class ViewServiceTests
             "", "", 0, 10);
         
         _messageRepositoryMock.Verify(repo => 
-            repo.GetMessagesAsync(It.IsAny<int>(), It.IsAny<int>(), 
-                It.IsAny<int>()), Times.Never);
+            repo.GetMessagesAsync(It.IsAny<string>(), It.IsAny<int>(), 
+                It.IsAny<int>(), It.IsAny<int>()), Times.Never);
         Assert.IsEmpty(result);
     }
     
@@ -84,8 +84,8 @@ public class ViewServiceTests
             "", "", 0, 10);
         
         _messageRepositoryMock.Verify(repo => 
-            repo.GetMessagesAsync(It.IsAny<int>(), It.IsAny<int>(), 
-                It.IsAny<int>()), Times.Once);
+            repo.GetMessagesAsync(It.IsAny<string>(), It.IsAny<int>(), 
+                It.IsAny<int>(), It.IsAny<int>()), Times.Once);
     }
     
     [Test]

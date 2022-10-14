@@ -57,7 +57,11 @@ public class ViewService : IViewService
         {
             return new List<MessageView>();
         }
-        
+
+        var userRepository = _unitOfWork.GetRepository<UserRepository>();
+        var user = await userRepository.GetByLoginAsync(username);
+        var userId = user!.Id!;
+
         var chatRepository = _unitOfWork.GetRepository<ChatRepository>();
         var chat = await chatRepository.GetByNameAsync(chatName);
         if (chat == null)
@@ -68,7 +72,8 @@ public class ViewService : IViewService
 
         var messageRepository = _unitOfWork.GetRepository<MessageRepository>();
         var messageViews = 
-            await messageRepository.GetMessagesAsync(chatId, skip, batchSize);
+            await messageRepository.GetMessagesAsync(
+                userId, chatId, skip, batchSize);
         return messageViews;
     }
 }

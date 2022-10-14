@@ -52,6 +52,10 @@ public class ChatsContext : IdentityDbContext<ApplicationUser>
             .HasOne(m => m.Chat)
             .WithMany(c => c.Messages)
             .HasForeignKey(m => m.ChatId);
+        builder.Entity<Message>()
+            .HasMany(m => m.MessageDeletedForUsers)
+            .WithOne(mdfu => mdfu.Message)
+            .HasForeignKey(mdfu => mdfu.MessageId);
 
         base.OnModelCreating(builder);
     }
